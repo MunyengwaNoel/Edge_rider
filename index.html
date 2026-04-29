@@ -395,8 +395,26 @@ game_html = '''<!DOCTYPE html>
             tilt: 0, // visual tilt angle
             pedaling: false,
             totalDistance: 3000,
-            laneWidth: 120
+            laneWidth: 120,
+            finished: false
         };
+        
+        // Rival riders
+        let rivals = [];
+        
+        function createRival(laneOffset, speedVariation, name, color, startZ) {
+            return {
+                name: name,
+                x: laneOffset,
+                z: startZ,
+                speed: 2 + speedVariation,
+                maxSpeed: 7.5 + speedVariation,
+                color: color,
+                finished: false,
+                crashes: false,
+                crashZ: 0
+            };
+        }
         
         // Course generation
         let course = {
@@ -597,7 +615,8 @@ game_html = '''<!DOCTYPE html>
             const segment = course.segments[segmentIndex];
             
             if (!segment && player.z >= player.totalDistance) {
-                winLevel();
+                player.finished = true;
+                checkRaceWinner();
                 return;
             }
             
@@ -636,6 +655,44 @@ game_html = '''<!DOCTYPE html>
             
             // Score
             score += Math.floor(player.speed * 0.15);
+            
+            // Update rival riders
+            for (let rival of rivals) {
+                if (rival.crashes) continue;
+                
+                rival.z += rival.speed;
+                
+                // Random lane changes
+                rival.x += (Math.random() - 0.5) * 2;
+                
+                // Check if off track
+                const segmentIndex = Math.floor(rival.z / 50);
+                const segment = course.segments[segmentIndex];
+                if (segment) {
+                    const halfWidth = segment.width / 2;
+                    if (Math.abs(rival.x - segment.curve) > halfWidth + 5) {
+                        rival.crashes = true;
+                        rival.crashZ = rival.z;
+                    }
+                }
+                
+                // Check obstacle collision
+                for (let obs of course.obstacles) {
+                    if (!obs.passed &&
+                        Math.abs(rival.z - obs.z) < 30 &&
+                        Math.abs(rival.x - obs.x) < 25) {
+                        rival.crashes = true;
+                        rival.crashZ = rival.z;
+                        obs.passed = true;
+                    }
+                }
+                
+                // Check if finished
+                if (rival.z >= player.totalDistance && !rival.finished) {
+                    rival.finished = true;
+                    checkRaceWinner();
+                }
+            }
             
             // Water particles (ambient)
             if (Math.random() < 0.1) {
@@ -825,6 +882,60 @@ game_html = '''<!DOCTYPE html>
             });
         }
         
+        function drawRivalBiker(proj, rival) {
+            const scale = proj.scale;
+            const x = proj.x;
+            const y = proj.y;
+            
+            // Body (torso)
+            ctx.fillStyle = '#1a1a1a'; // Black body suit
+            ctx.fillRect(x - 8 * scale, y - 40 * scale, 16 * scale, 35 * scale);
+            
+            // Arms
+            ctx.fillStyle = '#FFDBAC'; // Skin tone
+            ctx.fillRect(x - 18 * scale, y - 35 * scale, 10 * scale, 8 * scale);
+            ctx.fillRect(x + 8 * scale, y - 35 * scale, 10 * scale, 8 * scale);
+            
+            // Gloves
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - 20 * scale, y - 33 * scale, 4 * scale, 6 * scale);
+            ctx.fillRect(x + 18 * scale, y - 33 * scale, 4 * scale, 6 * scale);
+            
+            // Helmet
+            ctx.fillStyle = rival.color;
+            ctx.beginPath();
+            ctx.arc(x, y - 48 * scale, 12 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Helmet visor
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.beginPath();
+            ctx.arc(x + 2 * scale, y - 48 * scale, 5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Helmet stripe
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x - 2 * scale, y - 52 * scale, 4 * scale, 10 * scale);
+            
+            // Bike frame (simplified)
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 3 * scale;
+            
+            // Frame triangle
+            ctx.beginPath();
+            ctx.moveTo(x, y - 15 * scale);
+            ctx.lineTo(x - 8 * scale, y + 5 * scale);
+            ctx.lineTo(x + 8 * scale, y + 5 * scale);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Rider name label
+            ctx.fillStyle = rival.color;
+            ctx.font = `${Math.max(8, 12 * scale)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(rival.name.split(' ')[0], x, y + 20 * scale);
+        }
+        
         function drawCourse() {
             // Draw segments from far to near
             const drawDistance = 2000;
@@ -965,6 +1076,17 @@ game_html = '''<!DOCTYPE html>
                     ctx.closePath();
                     ctx.fill();
                 }
+            }
+            
+            // Draw rival riders
+            for (let rival of rivals) {
+                if (rival.z < player.z - 100 || rival.z > endZ) continue;
+                if (rival.crashes) continue;
+                
+                const proj = project3D(rival.x, 0, rival.z);
+                if (!proj || proj.scale < 0.01) continue;
+                
+                drawRivalBiker(proj, rival);
             }
             
             // Draw finish line
@@ -1157,6 +1279,47 @@ game_html = '''<!DOCTYPE html>
             updateUI();
         }
         
+        function checkRaceWinner() {
+            // Determine who finished first
+            let winner = null;
+            let winnerZ = -1;
+            let winnerName = 'YOU WIN!';
+            
+            // Check player
+            if (player.finished && player.z > winnerZ) {
+                winnerZ = player.z;
+                winner = 'player';
+                winnerName = 'YOU WIN!';
+            }
+            
+            // Check rivals
+            for (let rival of rivals) {
+                if (rival.finished && rival.z > winnerZ) {
+                    winnerZ = rival.z;
+                    winner = rival;
+                    winnerName = rival.name + ' WINS!';
+                }
+            }
+            
+            if (winner === 'player') {
+                winLevel();
+            } else if (winner && winner !== 'player') {
+                // Show that rival won
+                gameState = 'gameover';
+                showFloatingText('WHOOO! ' + winner.name, canvas.width / 2, canvas.height / 2 - 100);
+                
+                setTimeout(() => {
+                    document.getElementById('gameOverReason').textContent = winner.name + ' beat you to the finish!';
+                    document.getElementById('finalScore').textContent = score;
+                    document.getElementById('gameOverScreen').style.display = 'flex';
+                    document.getElementById('hud').style.display = 'none';
+                    document.getElementById('progressContainer').style.display = 'none';
+                    document.getElementById('balanceContainer').style.display = 'none';
+                    document.getElementById('speedometer').style.display = 'none';
+                }, 1500);
+            }
+        }
+        
         function winLevel() {
             gameState = 'win';
             score += 1000 * level;
@@ -1173,6 +1336,8 @@ game_html = '''<!DOCTYPE html>
                     color: `hsl(${Math.random() * 360}, 100%, 50%)`
                 });
             }
+            
+            showFloatingText('WHOOO!', canvas.width / 2, canvas.height / 2 - 100);
             
             setTimeout(() => {
                 document.getElementById('winScore').textContent = score;
@@ -1213,8 +1378,17 @@ game_html = '''<!DOCTYPE html>
                 tilt: 0,
                 pedaling: false,
                 totalDistance: 3000,
-                laneWidth: 120
+                laneWidth: 120,
+                finished: false
             };
+            
+            // Create rival riders - start them ahead on the track
+            rivals = [
+                createRival(-35, 0.3, 'RED RIDER', '#ff4444', 150),
+                createRival(35, 0.1, 'BLUE RIDER', '#4488ff', 250),
+                createRival(0, -0.2, 'YELLOW RIDER', '#ffaa00', 350)
+            ];
+            
             particles = [];
             waterDrops = [];
             screenShake = 0;
@@ -1239,8 +1413,17 @@ game_html = '''<!DOCTYPE html>
             player.balance = 0;
             player.balanceVelocity = 0;
             player.speed = 0;
+            player.finished = false;
             player.maxSpeed = 8 + level * 0.8;
             player.totalDistance = 3000 + level * 500;
+            
+            // Recreate rivals with increased difficulty - start further ahead each level
+            rivals = [
+                createRival(-35, 0.3 + level * 0.15, 'RED RIDER', '#ff4444', 200 + level * 50),
+                createRival(35, 0.1 + level * 0.15, 'BLUE RIDER', '#4488ff', 300 + level * 50),
+                createRival(0, -0.2 + level * 0.15, 'YELLOW RIDER', '#ffaa00', 400 + level * 50)
+            ];
+            
             particles = [];
             waterDrops = [];
             screenShake = 0;
