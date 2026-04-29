@@ -1,14 +1,14 @@
 
 import os
 
-os.makedirs('/mnt/agents/output/redbull_balance_game', exist_ok=True)
+os.makedirs('/mnt/agents/output/waterline_rider', exist_ok=True)
 
 game_html = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Red Bull: Balance or Bail - First Person</title>
+    <title>Waterline Rider - Balance or Splash</title>
     <style>
         * {
             margin: 0;
@@ -17,7 +17,7 @@ game_html = '''<!DOCTYPE html>
         }
         
         body {
-            background: #000;
+            background: #0a0a1a;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             height: 100vh;
@@ -29,11 +29,12 @@ game_html = '''<!DOCTYPE html>
         #gameContainer {
             position: relative;
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             height: 100vh;
-            max-height: 750px;
+            max-height: 800px;
             overflow: hidden;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: 0 0 60px rgba(0,150,255,0.3);
+            border-radius: 8px;
         }
         
         canvas {
@@ -62,7 +63,7 @@ game_html = '''<!DOCTYPE html>
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0,0,0,0.85);
+            background: rgba(5,5,20,0.92);
             pointer-events: all;
             z-index: 20;
         }
@@ -72,92 +73,104 @@ game_html = '''<!DOCTYPE html>
         }
         
         h1 {
-            color: #FFD700;
-            font-size: 3.5em;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
-            margin-bottom: 10px;
+            color: #00d4ff;
+            font-size: 4em;
+            text-shadow: 0 0 20px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.3);
+            margin-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: 6px;
+            font-weight: 900;
+        }
+        
+        .game-tagline {
+            color: #ff6b35;
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255,107,53,0.5);
+            font-weight: bold;
+            letter-spacing: 3px;
         }
         
         .subtitle {
-            color: #fff;
-            font-size: 1.4em;
+            color: #ccc;
+            font-size: 1.3em;
             margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
         }
         
         .btn {
             padding: 18px 60px;
-            font-size: 1.4em;
-            background: linear-gradient(45deg, #FFD700, #FFA500);
+            font-size: 1.3em;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
             border: none;
             border-radius: 50px;
-            color: #1a1a2e;
+            color: #fff;
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             transition: all 0.3s;
-            box-shadow: 0 5px 25px rgba(255,215,0,0.4);
+            box-shadow: 0 5px 25px rgba(0,212,255,0.4);
             margin: 10px;
         }
         
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 35px rgba(255,215,0,0.6);
+            box-shadow: 0 8px 35px rgba(0,212,255,0.6);
         }
         
         #hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
             justify-content: space-between;
             pointer-events: none;
         }
         
         .hud-item {
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.75);
             color: #fff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 1.2em;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.1em;
             font-weight: bold;
-            border: 2px solid #FFD700;
+            border: 2px solid #00d4ff;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
         
         .hud-item span {
-            color: #FFD700;
+            color: #00d4ff;
         }
         
         #balanceContainer {
             position: absolute;
-            bottom: 120px;
+            bottom: 140px;
             left: 50%;
             transform: translateX(-50%);
-            width: 400px;
+            width: 350px;
             text-align: center;
         }
         
         #balanceLabel {
-            color: #FFD700;
-            font-size: 1em;
+            color: #00d4ff;
+            font-size: 0.9em;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(0,212,255,0.5);
+            margin-bottom: 6px;
+            letter-spacing: 2px;
         }
         
         #balanceBar {
-            width: 400px;
-            height: 30px;
+            width: 350px;
+            height: 28px;
             background: rgba(0,0,0,0.7);
-            border-radius: 15px;
-            border: 3px solid #FFD700;
+            border-radius: 14px;
+            border: 2px solid #00d4ff;
             overflow: hidden;
             position: relative;
+            box-shadow: 0 0 15px rgba(0,212,255,0.2);
         }
         
         #balanceZone {
@@ -166,9 +179,9 @@ game_html = '''<!DOCTYPE html>
             left: 35%;
             width: 30%;
             height: 100%;
-            background: rgba(0,255,0,0.25);
-            border-left: 2px solid rgba(0,255,0,0.5);
-            border-right: 2px solid rgba(0,255,0,0.5);
+            background: rgba(0,255,100,0.2);
+            border-left: 2px solid rgba(0,255,100,0.4);
+            border-right: 2px solid rgba(0,255,100,0.4);
         }
         
         #balanceIndicator {
@@ -176,55 +189,57 @@ game_html = '''<!DOCTYPE html>
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 24px;
-            height: 36px;
-            background: #FFD700;
-            border-radius: 6px;
-            box-shadow: 0 0 15px rgba(255,215,0,0.9);
+            width: 20px;
+            height: 32px;
+            background: #00d4ff;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,212,255,0.9);
             transition: left 0.05s;
         }
         
         #speedometer {
             position: absolute;
-            bottom: 30px;
-            right: 30px;
-            width: 120px;
-            height: 120px;
-            background: rgba(0,0,0,0.7);
+            bottom: 25px;
+            right: 25px;
+            width: 110px;
+            height: 110px;
+            background: rgba(0,0,0,0.75);
             border-radius: 50%;
-            border: 3px solid #FFD700;
+            border: 3px solid #00d4ff;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            box-shadow: 0 0 20px rgba(0,212,255,0.2);
         }
         
         #speedValue {
-            color: #FFD700;
-            font-size: 2em;
+            color: #00d4ff;
+            font-size: 2.2em;
             font-weight: bold;
+            text-shadow: 0 0 10px rgba(0,212,255,0.5);
         }
         
         #speedLabel {
-            color: #aaa;
-            font-size: 0.8em;
+            color: #888;
+            font-size: 0.75em;
         }
         
         #progressContainer {
             position: absolute;
-            top: 80px;
+            top: 70px;
             left: 50%;
             transform: translateX(-50%);
-            width: 500px;
+            width: 450px;
             text-align: center;
         }
         
         #progressBar {
-            width: 500px;
-            height: 24px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 12px;
-            border: 2px solid #FFD700;
+            width: 450px;
+            height: 22px;
+            background: rgba(0,0,0,0.75);
+            border-radius: 11px;
+            border: 2px solid #00d4ff;
             overflow: hidden;
             position: relative;
         }
@@ -232,7 +247,7 @@ game_html = '''<!DOCTYPE html>
         #progressFill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #FFD700, #FF6600);
+            background: linear-gradient(90deg, #00d4ff, #ff6b35);
             transition: width 0.2s;
         }
         
@@ -243,12 +258,12 @@ game_html = '''<!DOCTYPE html>
             transform: translate(-50%, -50%);
             color: #fff;
             font-weight: bold;
-            font-size: 0.9em;
+            font-size: 0.85em;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
         }
         
         .controls-info {
-            color: #aaa;
+            color: #888;
             margin-top: 25px;
             font-size: 1em;
             text-align: center;
@@ -256,47 +271,32 @@ game_html = '''<!DOCTYPE html>
         }
         
         .controls-info kbd {
-            background: rgba(255,255,255,0.2);
+            background: rgba(0,212,255,0.2);
             padding: 3px 10px;
             border-radius: 5px;
-            color: #FFD700;
+            color: #00d4ff;
             font-weight: bold;
+            border: 1px solid rgba(0,212,255,0.4);
         }
         
         #tiltWarning {
             position: absolute;
-            top: 50%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: #ff4444;
-            font-size: 3em;
+            font-size: 2.5em;
             font-weight: bold;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            text-shadow: 0 0 20px rgba(255,68,68,0.8);
             opacity: 0;
             transition: opacity 0.2s;
             pointer-events: none;
         }
         
-        #distanceMarkers {
-            position: absolute;
-            bottom: 160px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 80px;
-            pointer-events: none;
-        }
-        
-        .marker {
-            color: rgba(255,255,255,0.5);
-            font-size: 0.9em;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-        }
-        
         .splash-text {
             position: absolute;
             color: #fff;
-            font-size: 2em;
+            font-size: 1.8em;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             animation: floatUp 1.5s forwards;
@@ -306,6 +306,16 @@ game_html = '''<!DOCTYPE html>
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+        }
+        
+        .logo-water {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(0,212,255,0.3);
+            font-size: 0.8em;
+            letter-spacing: 2px;
         }
     </style>
 </head>
@@ -344,8 +354,9 @@ game_html = '''<!DOCTYPE html>
         </div>
         
         <div id="startScreen">
-            <h1>Balance or Bail</h1>
-            <p class="subtitle">First-Person Water Challenge</p>
+            <h1>Waterline Rider</h1>
+            <p class="game-tagline">Balance or Splash</p>
+            <p class="subtitle">Ride the narrow line. Don't fall in.</p>
             <button class="btn" onclick="startGame()">Start Ride</button>
             <div class="controls-info">
                 <p><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> — Steer & Balance</p>
@@ -353,20 +364,21 @@ game_html = '''<!DOCTYPE html>
                 <p>Keep the indicator in the GREEN zone!</p>
                 <p>Don't fall into the water! 💦</p>
             </div>
+            <p class="logo-water">WATERLINE RIDER © 2026</p>
         </div>
         
         <div id="gameOverScreen">
-            <h1 style="color:#ff4444;">SPLASH!</h1>
+            <h1 style="color:#ff4444; font-size:3.5em;">SPLASH!</h1>
             <p class="subtitle" id="gameOverReason">You fell into the water!</p>
-            <p class="subtitle">Final Score: <span id="finalScore" style="color:#FFD700;">0</span></p>
+            <p class="subtitle">Final Score: <span id="finalScore" style="color:#00d4ff;">0</span></p>
             <button class="btn" onclick="restartGame()">Try Again</button>
             <button class="btn" onclick="backToMenu()">Main Menu</button>
         </div>
         
         <div id="winScreen">
-            <h1 style="color:#00ff00;">VICTORY!</h1>
+            <h1 style="color:#00ff88; font-size:3.5em;">VICTORY!</h1>
             <p class="subtitle">You made it across!</p>
-            <p class="subtitle">Score: <span id="winScore" style="color:#FFD700;">0</span></p>
+            <p class="subtitle">Score: <span id="winScore" style="color:#00d4ff;">0</span></p>
             <button class="btn" onclick="nextLevel()">Next Level</button>
             <button class="btn" onclick="backToMenu()">Main Menu</button>
         </div>
@@ -376,7 +388,6 @@ game_html = '''<!DOCTYPE html>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Game state
         let gameState = 'menu';
         let score = 0;
         let level = 1;
@@ -384,59 +395,28 @@ game_html = '''<!DOCTYPE html>
         let gameLoop = null;
         let lastTime = 0;
         
-        // Player (first-person perspective)
         let player = {
-            x: 0, // lateral position on ramp (-50 to 50)
-            z: 0, // distance along ramp
+            x: 0,
+            z: 0,
             speed: 0,
             maxSpeed: 8,
-            balance: 0, // -100 (left) to 100 (right), 0 is center
+            balance: 0,
             balanceVelocity: 0,
-            tilt: 0, // visual tilt angle
+            tilt: 0,
             pedaling: false,
             totalDistance: 3000,
             laneWidth: 120,
             finished: false
         };
         
-        // Rival riders
         let rivals = [];
-        
-        function createRival(laneOffset, speedVariation, name, color, startZ) {
-            return {
-                name: name,
-                x: laneOffset,
-                z: startZ,
-                speed: 2 + speedVariation,
-                maxSpeed: 7.5 + speedVariation,
-                color: color,
-                finished: false,
-                crashes: false,
-                crashZ: 0
-            };
-        }
-        
-        // Course generation
-        let course = {
-            segments: [],
-            obstacles: [],
-            decorations: []
-        };
-        
-        // Input
+        let course = { segments: [], obstacles: [], decorations: [] };
         let keys = {};
-        
-        // Visual effects
         let particles = [];
         let waterDrops = [];
         let screenShake = 0;
         
-        // Camera/View
-        let view = {
-            fov: 800,
-            horizon: 0.4, // horizon line at 40% of screen height
-            cameraHeight: 150
-        };
+        let view = { fov: 800, horizon: 0.4, cameraHeight: 150 };
         
         function resize() {
             const container = document.getElementById('gameContainer');
@@ -448,13 +428,9 @@ game_html = '''<!DOCTYPE html>
         window.addEventListener('resize', resize);
         resize();
         
-        // Input handling
         document.addEventListener('keydown', (e) => {
             keys[e.key.toLowerCase()] = true;
-            if (e.code === 'Space') {
-                e.preventDefault();
-                keys['space'] = true;
-            }
+            if (e.code === 'Space') { e.preventDefault(); keys['space'] = true; }
         });
         
         document.addEventListener('keyup', (e) => {
@@ -462,157 +438,104 @@ game_html = '''<!DOCTYPE html>
             if (e.code === 'Space') keys['space'] = false;
         });
         
-        // Touch controls
         let touchStartX = 0;
-        canvas.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        });
-        
+        canvas.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
         canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const touchX = e.touches[0].clientX;
-            const diff = touchX - touchStartX;
             const center = canvas.width / 2;
-            
-            if (touchX < center - 50) {
-                keys['arrowleft'] = true;
-                keys['arrowright'] = false;
-            } else if (touchX > center + 50) {
-                keys['arrowright'] = true;
-                keys['arrowleft'] = false;
-            }
-            
-            // Bottom half for pedaling
-            if (e.touches[0].clientY > canvas.height * 0.7) {
-                keys['space'] = true;
-            }
+            if (touchX < center - 50) { keys['arrowleft'] = true; keys['arrowright'] = false; }
+            else if (touchX > center + 50) { keys['arrowright'] = true; keys['arrowleft'] = false; }
+            if (e.touches[0].clientY > canvas.height * 0.7) keys['space'] = true;
+        });
+        canvas.addEventListener('touchend', () => {
+            keys['arrowleft'] = false; keys['arrowright'] = false; keys['space'] = false;
         });
         
-        canvas.addEventListener('touchend', () => {
-            keys['arrowleft'] = false;
-            keys['arrowright'] = false;
-            keys['space'] = false;
-        });
+        function createRival(laneOffset, speedVar, name, color, startZ) {
+            return { name, x: laneOffset, z: startZ, speed: 2 + speedVar, maxSpeed: 7.5 + speedVar, color, finished: false, crashed: false, crashZ: 0, wobbleOffset: Math.random() * 100 };
+        }
         
         function generateCourse() {
             course.segments = [];
             course.obstacles = [];
             course.decorations = [];
             
-            const segmentLength = 50;
-            const totalSegments = Math.ceil(player.totalDistance / segmentLength);
+            const segLen = 50;
+            const totalSegs = Math.ceil(player.totalDistance / segLen);
             
-            for (let i = 0; i < totalSegments; i++) {
-                const z = i * segmentLength;
-                
-                // Ramp width narrows as you progress
-                const progress = i / totalSegments;
+            for (let i = 0; i < totalSegs; i++) {
+                const z = i * segLen;
+                const progress = i / totalSegs;
                 const baseWidth = player.laneWidth * (1 - progress * 0.3 * Math.min(level, 3));
-                
-                // Slight curves in the ramp
                 const curve = Math.sin(i * 0.1) * 30 * level;
                 
-                course.segments.push({
-                    z: z,
-                    width: baseWidth,
-                    curve: curve,
-                    yOffset: Math.sin(i * 0.05) * 10 // slight elevation changes
-                });
+                course.segments.push({ z, width: baseWidth, curve, yOffset: Math.sin(i * 0.05) * 10 });
                 
-                // Add obstacles
-                if (i > 5 && i < totalSegments - 5 && Math.random() < 0.12 + level * 0.03) {
-                    const obsX = (Math.random() - 0.5) * baseWidth * 0.6;
+                if (i > 5 && i < totalSegs - 5 && Math.random() < 0.12 + level * 0.03) {
                     course.obstacles.push({
-                        z: z + segmentLength / 2,
-                        x: obsX,
-                        width: 25,
-                        height: 20,
+                        z: z + segLen / 2,
+                        x: (Math.random() - 0.5) * baseWidth * 0.6,
+                        width: 25, height: 20,
                         type: Math.random() > 0.4 ? 'barrel' : 'ramp',
                         passed: false
                     });
                 }
                 
-                // Side decorations (crowd, banners, etc.)
                 if (i % 3 === 0) {
                     const side = Math.random() > 0.5 ? 1 : -1;
                     course.decorations.push({
-                        z: z,
-                        x: side * (baseWidth / 2 + 20 + Math.random() * 30),
+                        z, x: side * (baseWidth / 2 + 20 + Math.random() * 30),
                         type: Math.random() > 0.6 ? 'person' : (Math.random() > 0.5 ? 'banner' : 'tent'),
                         color: `hsl(${Math.random() * 360}, 70%, ${50 + Math.random() * 20}%)`,
-                        side: side
+                        side
                     });
                 }
             }
-            
-            // Finish line
             course.finishZ = player.totalDistance;
         }
         
         function project3D(x, y, z) {
-            // First-person perspective projection
-            const relativeZ = z - player.z;
-            if (relativeZ <= 0) return null;
-            
-            const scale = view.fov / relativeZ;
-            const screenX = canvas.width / 2 + (x - player.x) * scale;
-            const screenY = view.horizon + (view.cameraHeight - y) * scale;
-            
-            return { x: screenX, y: screenY, scale: scale };
+            const relZ = z - player.z;
+            if (relZ <= 0) return null;
+            const scale = view.fov / relZ;
+            return {
+                x: canvas.width / 2 + (x - player.x) * scale,
+                y: view.horizon + (view.cameraHeight - y) * scale,
+                scale
+            };
         }
         
         function update(dt) {
             if (gameState !== 'playing') return;
             
-            // Pedaling
             player.pedaling = keys[' '] || keys['space'];
             const targetSpeed = player.pedaling ? player.maxSpeed : 2;
             player.speed += (targetSpeed - player.speed) * 0.08;
-            
-            // Forward movement
             player.z += player.speed;
             
-            // Balance mechanics - AUTO-BALANCE MODE
-            const steerInput = (keys['arrowright'] || keys['d'] ? 1 : 0) - 
-                              (keys['arrowleft'] || keys['a'] ? 1 : 0);
-            
-            // Reduced natural instability
+            const steerInput = (keys['arrowright'] || keys['d'] ? 1 : 0) - (keys['arrowleft'] || keys['a'] ? 1 : 0);
             const wobble = Math.sin(Date.now() * 0.004) * (0.15 + player.speed * 0.02);
             const wind = Math.sin(Date.now() * 0.0015) * (level * 0.08);
+            const autoCenter = -player.balance * 0.15;
             
-            // Auto-centering force - bike naturally wants to stay upright
-            const autoCenterForce = -player.balance * 0.15;
-            
-            // Reduced steer input sensitivity
-            player.balanceVelocity += (steerInput * 0.8 + wobble + wind + autoCenterForce) * dt * 60;
-            player.balanceVelocity *= 0.96; // Slightly higher damping for stability
+            player.balanceVelocity += (steerInput * 0.8 + wobble + wind + autoCenter) * dt * 60;
+            player.balanceVelocity *= 0.96;
             player.balance += player.balanceVelocity * dt * 60;
-            
-            // Clamp balance
             player.balance = Math.max(-100, Math.min(100, player.balance));
-            
-            // Lateral movement based on balance
             player.x += player.balance * 0.02 * player.speed * dt * 60;
-            
-            // Visual tilt
             player.tilt = player.balance * 0.3;
             
-            // Screen shake when unbalanced
             if (Math.abs(player.balance) > 60) {
                 screenShake = (Math.abs(player.balance) - 60) * 0.1;
             } else {
                 screenShake *= 0.9;
             }
             
-            // Check if fallen - much more forgiving now
-            if (Math.abs(player.balance) > 130) {
-                fallOff('Lost your balance!');
-                return;
-            }
+            if (Math.abs(player.balance) > 130) { fallOff('Lost your balance!'); return; }
             
-            // Find current segment
-            const segmentIndex = Math.floor(player.z / 50);
-            const segment = course.segments[segmentIndex];
+            const segIndex = Math.floor(player.z / 50);
+            const segment = course.segments[segIndex];
             
             if (!segment && player.z >= player.totalDistance) {
                 player.finished = true;
@@ -620,23 +543,20 @@ game_html = '''<!DOCTYPE html>
                 return;
             }
             
-            // Check if off the ramp
             if (segment) {
                 const halfWidth = segment.width / 2;
                 if (Math.abs(player.x - segment.curve) > halfWidth + 5) {
                     fallOff('Fell off the ramp!');
                     return;
                 }
+                if (Math.abs(player.x - segment.curve) > halfWidth - 10) {
+                    player.balanceVelocity -= Math.sign(player.x - segment.curve) * 2;
+                }
             }
             
-            // Obstacle collision
             for (let obs of course.obstacles) {
-                if (!obs.passed && 
-                    Math.abs(player.z - obs.z) < 30 &&
-                    Math.abs(player.x - obs.x) < 25) {
-                    
+                if (!obs.passed && Math.abs(player.z - obs.z) < 30 && Math.abs(player.x - obs.x) < 25) {
                     if (obs.type === 'barrel') {
-                        // Hit a barrel - crash and fall!
                         obs.passed = true;
                         screenShake = 20;
                         createParticles(player.x, 0, player.z, 20, '#FF6600');
@@ -653,48 +573,37 @@ game_html = '''<!DOCTYPE html>
                 }
             }
             
-            // Score
             score += Math.floor(player.speed * 0.15);
             
-            // Update rival riders
             for (let rival of rivals) {
-                if (rival.crashes) continue;
-                
+                if (rival.crashed) continue;
                 rival.z += rival.speed;
+                rival.x += Math.sin(Date.now() * 0.003 + rival.wobbleOffset) * 0.5;
                 
-                // Random lane changes
-                rival.x += (Math.random() - 0.5) * 2;
-                
-                // Check if off track
-                const segmentIndex = Math.floor(rival.z / 50);
-                const segment = course.segments[segmentIndex];
-                if (segment) {
-                    const halfWidth = segment.width / 2;
-                    if (Math.abs(rival.x - segment.curve) > halfWidth + 5) {
-                        rival.crashes = true;
+                const rSegIdx = Math.floor(rival.z / 50);
+                const rSeg = course.segments[rSegIdx];
+                if (rSeg) {
+                    const hw = rSeg.width / 2;
+                    if (Math.abs(rival.x - rSeg.curve) > hw + 5) {
+                        rival.crashed = true;
                         rival.crashZ = rival.z;
                     }
                 }
                 
-                // Check obstacle collision
                 for (let obs of course.obstacles) {
-                    if (!obs.passed &&
-                        Math.abs(rival.z - obs.z) < 30 &&
-                        Math.abs(rival.x - obs.x) < 25) {
-                        rival.crashes = true;
+                    if (!obs.passed && Math.abs(rival.z - obs.z) < 30 && Math.abs(rival.x - obs.x) < 25) {
+                        rival.crashed = true;
                         rival.crashZ = rival.z;
                         obs.passed = true;
                     }
                 }
                 
-                // Check if finished
                 if (rival.z >= player.totalDistance && !rival.finished) {
                     rival.finished = true;
                     checkRaceWinner();
                 }
             }
             
-            // Water particles (ambient)
             if (Math.random() < 0.1) {
                 waterDrops.push({
                     x: (Math.random() - 0.5) * canvas.width,
@@ -705,19 +614,14 @@ game_html = '''<!DOCTYPE html>
                 });
             }
             
-            // Update particles
             particles = particles.filter(p => {
-                p.vy += 0.2;
-                p.y += p.vy;
-                p.x += p.vx;
+                p.vy += 0.2; p.y += p.vy; p.x += p.vx;
                 p.life -= dt * 1.5;
                 return p.life > 0;
             });
             
-            // Update water drops
             waterDrops = waterDrops.filter(d => {
-                d.y += d.vy;
-                d.life -= dt;
+                d.y += d.vy; d.life -= dt;
                 return d.life > 0 && d.y > view.horizon;
             });
             
@@ -735,7 +639,7 @@ game_html = '''<!DOCTYPE html>
                         vy: -Math.random() * 8 - 2,
                         life: 1,
                         size: Math.random() * 6 + 2,
-                        color: color
+                        color
                     });
                 }
             }
@@ -771,7 +675,7 @@ game_html = '''<!DOCTYPE html>
                 indicator.style.background = '#ffaa00';
                 document.getElementById('tiltWarning').style.opacity = '0.5';
             } else {
-                indicator.style.background = '#FFD700';
+                indicator.style.background = '#00d4ff';
                 document.getElementById('tiltWarning').style.opacity = '0';
             }
             
@@ -781,66 +685,57 @@ game_html = '''<!DOCTYPE html>
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Screen shake
             ctx.save();
             if (screenShake > 0.5) {
-                ctx.translate(
-                    (Math.random() - 0.5) * screenShake * 2,
-                    (Math.random() - 0.5) * screenShake * 2
-                );
+                ctx.translate((Math.random() - 0.5) * screenShake * 2, (Math.random() - 0.5) * screenShake * 2);
             }
             
-            // Sky
+            // Sky with gradient
             const skyGrad = ctx.createLinearGradient(0, 0, 0, view.horizon);
-            skyGrad.addColorStop(0, '#4A90E2');
-            skyGrad.addColorStop(0.5, '#87CEEB');
-            skyGrad.addColorStop(1, '#E0F6FF');
+            skyGrad.addColorStop(0, '#1a3a5c');
+            skyGrad.addColorStop(0.4, '#4A90E2');
+            skyGrad.addColorStop(1, '#87CEEB');
             ctx.fillStyle = skyGrad;
             ctx.fillRect(0, 0, canvas.width, view.horizon);
             
             // Sun
             ctx.fillStyle = '#FFD700';
             ctx.beginPath();
-            ctx.arc(canvas.width * 0.8, view.horizon * 0.3, 40, 0, Math.PI * 2);
+            ctx.arc(canvas.width * 0.75, view.horizon * 0.25, 35, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
             ctx.beginPath();
-            ctx.arc(canvas.width * 0.8, view.horizon * 0.3, 60, 0, Math.PI * 2);
+            ctx.arc(canvas.width * 0.75, view.horizon * 0.25, 55, 0, Math.PI * 2);
             ctx.fill();
             
-            // Clouds
             drawClouds();
             
             // Water
             const waterGrad = ctx.createLinearGradient(0, view.horizon, 0, canvas.height);
-            waterGrad.addColorStop(0, '#4682B4');
-            waterGrad.addColorStop(0.5, '#1E90FF');
-            waterGrad.addColorStop(1, '#0066CC');
+            waterGrad.addColorStop(0, '#2E5C8A');
+            waterGrad.addColorStop(0.3, '#1E90FF');
+            waterGrad.addColorStop(1, '#003d7a');
             ctx.fillStyle = waterGrad;
             ctx.fillRect(0, view.horizon, canvas.width, canvas.height - view.horizon);
             
-            // Water waves (perspective)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            // Water waves
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.lineWidth = 1;
-            for (let i = 0; i < 8; i++) {
-                const y = view.horizon + (canvas.height - view.horizon) * (i / 8);
+            for (let i = 0; i < 10; i++) {
+                const y = view.horizon + (canvas.height - view.horizon) * (i / 10);
                 const waveOffset = Math.sin(Date.now() * 0.002 + i) * 20;
                 ctx.beginPath();
-                for (let x = 0; x < canvas.width; x += 20) {
-                    const wy = y + Math.sin((x + waveOffset) * 0.02) * 3;
+                for (let x = 0; x < canvas.width; x += 15) {
+                    const wy = y + Math.sin((x + waveOffset) * 0.015) * 4;
                     if (x === 0) ctx.moveTo(x, wy);
                     else ctx.lineTo(x, wy);
                 }
                 ctx.stroke();
             }
             
-            // Draw 3D scene
             drawCourse();
-            
-            // Draw handlebars (first-person view)
             drawHandlebars();
             
-            // Particles
             particles.forEach(p => {
                 ctx.fillStyle = p.color;
                 ctx.globalAlpha = p.life;
@@ -850,7 +745,6 @@ game_html = '''<!DOCTYPE html>
             });
             ctx.globalAlpha = 1;
             
-            // Water drops on screen
             waterDrops.forEach(d => {
                 ctx.fillStyle = `rgba(150, 200, 255, ${d.life * 0.5})`;
                 ctx.beginPath();
@@ -862,11 +756,11 @@ game_html = '''<!DOCTYPE html>
         }
         
         function drawClouds() {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
             const clouds = [
-                { x: canvas.width * 0.2, y: view.horizon * 0.2, w: 80, h: 30 },
-                { x: canvas.width * 0.5, y: view.horizon * 0.15, w: 100, h: 35 },
-                { x: canvas.width * 0.1, y: view.horizon * 0.25, w: 60, h: 25 }
+                { x: canvas.width * 0.15, y: view.horizon * 0.18, w: 90, h: 35 },
+                { x: canvas.width * 0.45, y: view.horizon * 0.12, w: 120, h: 40 },
+                { x: canvas.width * 0.85, y: view.horizon * 0.22, w: 70, h: 28 }
             ];
             
             clouds.forEach(c => {
@@ -874,93 +768,193 @@ game_html = '''<!DOCTYPE html>
                 ctx.ellipse(c.x, c.y, c.w, c.h, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.ellipse(c.x - 20, c.y + 5, c.w * 0.6, c.h * 0.7, 0, 0, Math.PI * 2);
+                ctx.ellipse(c.x - 25, c.y + 6, c.w * 0.55, c.h * 0.7, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.ellipse(c.x + 20, c.y + 5, c.w * 0.6, c.h * 0.7, 0, 0, Math.PI * 2);
+                ctx.ellipse(c.x + 25, c.y + 6, c.w * 0.55, c.h * 0.7, 0, 0, Math.PI * 2);
                 ctx.fill();
             });
         }
         
+        function drawRealisticWheel(cx, cy, radius, rotation) {
+            // Tire
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = radius * 0.15;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Rim
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = radius * 0.06;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.82, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Hub
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Spokes (16 spokes)
+            ctx.strokeStyle = '#bbb';
+            ctx.lineWidth = Math.max(0.5, radius * 0.015);
+            for (let i = 0; i < 16; i++) {
+                const angle = rotation + (i * Math.PI / 8);
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * radius * 0.82, cy + Math.sin(angle) * radius * 0.82);
+                ctx.stroke();
+            }
+        }
+        
         function drawRivalBiker(proj, rival) {
-            const scale = proj.scale;
+            const s = proj.scale;
             const x = proj.x;
             const y = proj.y;
             
-            // Body (torso)
-            ctx.fillStyle = '#1a1a1a'; // Black body suit
-            ctx.fillRect(x - 8 * scale, y - 40 * scale, 16 * scale, 35 * scale);
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 5 * s, 25 * s, 8 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
             
-            // Arms
-            ctx.fillStyle = '#FFDBAC'; // Skin tone
-            ctx.fillRect(x - 18 * scale, y - 35 * scale, 10 * scale, 8 * scale);
-            ctx.fillRect(x + 8 * scale, y - 35 * scale, 10 * scale, 8 * scale);
+            // Back wheel
+            drawRealisticWheel(x - 18 * s, y + 8 * s, 14 * s, Date.now() * 0.008);
             
-            // Gloves
+            // Front wheel
+            drawRealisticWheel(x + 18 * s, y + 8 * s, 14 * s, Date.now() * 0.008);
+            
+            // Frame - realistic bike geometry
+            ctx.strokeStyle = rival.color;
+            ctx.lineWidth = 3 * s;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(x - 18 * s, y + 8 * s);   // rear axle
+            ctx.lineTo(x - 8 * s, y - 12 * s);   // seat post
+            ctx.lineTo(x + 5 * s, y - 12 * s);   // seat
+            ctx.lineTo(x + 2 * s, y - 5 * s);    // top tube center
+            ctx.lineTo(x + 18 * s, y + 8 * s);   // front axle
+            ctx.moveTo(x - 8 * s, y - 12 * s);
+            ctx.lineTo(x - 5 * s, y - 2 * s);    // down tube
+            ctx.lineTo(x + 2 * s, y - 5 * s);
+            ctx.stroke();
+            
+            // Fork
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2.5 * s;
+            ctx.beginPath();
+            ctx.moveTo(x + 2 * s, y - 5 * s);
+            ctx.lineTo(x + 18 * s, y + 8 * s);
+            ctx.stroke();
+            
+            // Handlebars
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2 * s;
+            ctx.beginPath();
+            ctx.moveTo(x + 2 * s, y - 5 * s);
+            ctx.lineTo(x + 8 * s, y - 18 * s);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + 8 * s, y - 18 * s);
+            ctx.lineTo(x + 14 * s, y - 16 * s);
+            ctx.stroke();
+            
+            // Seat
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x + 2 * s, y - 14 * s, 10 * s, 4 * s);
+            
+            // RIDER BODY
+            // Legs (pedaling)
+            const pedalAngle = Date.now() * 0.008;
+            ctx.strokeStyle = '#1a1a2a';
+            ctx.lineWidth = 4 * s;
+            
+            // Left leg
+            ctx.beginPath();
+            ctx.moveTo(x - 2 * s, y - 8 * s);
+            ctx.lineTo(x - 5 * s + Math.cos(pedalAngle) * 6 * s, y + 2 * s + Math.sin(pedalAngle) * 4 * s);
+            ctx.stroke();
+            
+            // Right leg
+            ctx.beginPath();
+            ctx.moveTo(x - 2 * s, y - 8 * s);
+            ctx.lineTo(x - 5 * s + Math.cos(pedalAngle + Math.PI) * 6 * s, y + 2 * s + Math.sin(pedalAngle + Math.PI) * 4 * s);
+            ctx.stroke();
+            
+            // Torso
+            ctx.fillStyle = rival.color;
+            ctx.beginPath();
+            ctx.moveTo(x - 2 * s, y - 8 * s);
+            ctx.lineTo(x + 6 * s, y - 28 * s);
+            ctx.lineTo(x + 10 * s, y - 26 * s);
+            ctx.lineTo(x + 2 * s, y - 6 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Arms reaching to handlebars
+            ctx.strokeStyle = '#FFDBAC';
+            ctx.lineWidth = 3.5 * s;
+            ctx.beginPath();
+            ctx.moveTo(x + 7 * s, y - 26 * s);
+            ctx.lineTo(x + 10 * s, y - 20 * s);
+            ctx.lineTo(x + 13 * s, y - 16 * s);
+            ctx.stroke();
+            
+            // Hands on grips
             ctx.fillStyle = '#333';
-            ctx.fillRect(x - 20 * scale, y - 33 * scale, 4 * scale, 6 * scale);
-            ctx.fillRect(x + 18 * scale, y - 33 * scale, 4 * scale, 6 * scale);
+            ctx.beginPath();
+            ctx.ellipse(x + 13 * s, y - 16 * s, 3 * s, 2.5 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#FFDBAC';
+            ctx.beginPath();
+            ctx.arc(x + 8 * s, y - 32 * s, 7 * s, 0, Math.PI * 2);
+            ctx.fill();
             
             // Helmet
             ctx.fillStyle = rival.color;
             ctx.beginPath();
-            ctx.arc(x, y - 48 * scale, 12 * scale, 0, Math.PI * 2);
+            ctx.arc(x + 8 * s, y - 34 * s, 8 * s, Math.PI, 0);
             ctx.fill();
+            ctx.fillRect(x + 0 * s, y - 34 * s, 16 * s, 4 * s);
             
             // Helmet visor
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.beginPath();
-            ctx.arc(x + 2 * scale, y - 48 * scale, 5 * scale, 0, Math.PI * 2);
+            ctx.arc(x + 10 * s, y - 32 * s, 4 * s, 0, Math.PI * 2);
             ctx.fill();
             
-            // Helmet stripe
+            // Name tag
             ctx.fillStyle = '#fff';
-            ctx.fillRect(x - 2 * scale, y - 52 * scale, 4 * scale, 10 * scale);
-            
-            // Bike frame (simplified)
-            ctx.strokeStyle = '#555';
-            ctx.lineWidth = 3 * scale;
-            
-            // Frame triangle
-            ctx.beginPath();
-            ctx.moveTo(x, y - 15 * scale);
-            ctx.lineTo(x - 8 * scale, y + 5 * scale);
-            ctx.lineTo(x + 8 * scale, y + 5 * scale);
-            ctx.closePath();
-            ctx.stroke();
-            
-            // Rider name label
-            ctx.fillStyle = rival.color;
-            ctx.font = `${Math.max(8, 12 * scale)}px Arial`;
+            ctx.font = `bold ${Math.max(7, 10 * s)}px Arial`;
             ctx.textAlign = 'center';
-            ctx.fillText(rival.name.split(' ')[0], x, y + 20 * scale);
+            ctx.fillText(rival.name.split(' ')[0], x, y + 22 * s);
         }
         
         function drawCourse() {
-            // Draw segments from far to near
-            const drawDistance = 2000;
+            const drawDist = 2000;
             const startZ = Math.floor(player.z / 50) * 50;
-            const endZ = startZ + drawDistance;
+            const endZ = startZ + drawDist;
             
-            // Draw decorations first (behind ramp)
+            // Decorations
             for (let i = course.decorations.length - 1; i >= 0; i--) {
                 const dec = course.decorations[i];
                 if (dec.z < player.z - 50 || dec.z > endZ) continue;
-                
                 const proj = project3D(dec.x, 0, dec.z);
                 if (!proj || proj.scale < 0.01) continue;
-                
                 const size = 30 * proj.scale;
                 
                 if (dec.type === 'person') {
-                    // Simple person
                     ctx.fillStyle = dec.color;
                     ctx.fillRect(proj.x - size/4, proj.y - size, size/2, size);
                     ctx.beginPath();
                     ctx.arc(proj.x, proj.y - size * 1.3, size/3, 0, Math.PI * 2);
                     ctx.fill();
-                    
-                    // Arms cheering
                     if (Math.abs(dec.z - player.z) < 300) {
                         ctx.strokeStyle = dec.color;
                         ctx.lineWidth = 2 * proj.scale;
@@ -979,7 +973,7 @@ game_html = '''<!DOCTYPE html>
                     ctx.fillStyle = '#fff';
                     ctx.font = `${Math.max(8, 10 * proj.scale)}px Arial`;
                     ctx.textAlign = 'center';
-                    ctx.fillText('RED BULL', proj.x, proj.y - size * 1.5);
+                    ctx.fillText('WATERLINE', proj.x, proj.y - size * 1.5);
                 } else if (dec.type === 'tent') {
                     ctx.fillStyle = '#0033AA';
                     ctx.beginPath();
@@ -991,34 +985,31 @@ game_html = '''<!DOCTYPE html>
                 }
             }
             
-            // Draw ramp segments
+            // Ramp segments
             for (let z = endZ; z >= startZ; z -= 50) {
-                const segIndex = Math.floor(z / 50);
-                const seg = course.segments[segIndex];
+                const segIdx = Math.floor(z / 50);
+                const seg = course.segments[segIdx];
                 if (!seg) continue;
-                
-                const nextSeg = course.segments[segIndex + 1];
+                const nextSeg = course.segments[segIdx + 1];
                 if (!nextSeg) continue;
                 
-                // Project corners
-                const halfWidth = seg.width / 2;
+                const hw = seg.width / 2;
                 const curve = seg.curve;
                 
-                const p1 = project3D(curve - halfWidth, seg.yOffset, z);
-                const p2 = project3D(curve + halfWidth, seg.yOffset, z);
+                const p1 = project3D(curve - hw, seg.yOffset, z);
+                const p2 = project3D(curve + hw, seg.yOffset, z);
                 const p3 = project3D(nextSeg.curve + nextSeg.width / 2, nextSeg.yOffset, z + 50);
                 const p4 = project3D(nextSeg.curve - nextSeg.width / 2, nextSeg.yOffset, z + 50);
                 
                 if (!p1 || !p2 || !p3 || !p4) continue;
                 
-                // Ramp surface
                 const rampGrad = ctx.createLinearGradient(0, p1.y, 0, p3.y);
-                if (segIndex % 5 === 0) {
-                    rampGrad.addColorStop(0, '#FFD700');
-                    rampGrad.addColorStop(1, '#FFA500');
+                if (segIdx % 5 === 0) {
+                    rampGrad.addColorStop(0, '#ff6b35');
+                    rampGrad.addColorStop(1, '#ff8c5a');
                 } else {
-                    rampGrad.addColorStop(0, '#FF4444');
-                    rampGrad.addColorStop(1, '#CC0000');
+                    rampGrad.addColorStop(0, '#e74c3c');
+                    rampGrad.addColorStop(1, '#c0392b');
                 }
                 
                 ctx.fillStyle = rampGrad;
@@ -1031,16 +1022,15 @@ game_html = '''<!DOCTYPE html>
                 ctx.fill();
                 
                 // Lane markings
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
                 ctx.lineWidth = Math.max(1, 2 * p1.scale);
                 ctx.setLineDash([10 * p1.scale, 10 * p1.scale]);
-                
-                const centerP1 = project3D(curve, seg.yOffset, z);
-                const centerP2 = project3D(nextSeg.curve, nextSeg.yOffset, z + 50);
-                if (centerP1 && centerP2) {
+                const cp1 = project3D(curve, seg.yOffset, z);
+                const cp2 = project3D(nextSeg.curve, nextSeg.yOffset, z + 50);
+                if (cp1 && cp2) {
                     ctx.beginPath();
-                    ctx.moveTo(centerP1.x, centerP1.y);
-                    ctx.lineTo(centerP2.x, centerP2.y);
+                    ctx.moveTo(cp1.x, cp1.y);
+                    ctx.lineTo(cp2.x, cp2.y);
                     ctx.stroke();
                 }
                 ctx.setLineDash([]);
@@ -1051,14 +1041,12 @@ game_html = '''<!DOCTYPE html>
                 ctx.fillRect(p2.x - 3, p2.y - 5 * p1.scale, 6, 10 * p1.scale);
             }
             
-            // Draw obstacles
+            // Obstacles
             for (let obs of course.obstacles) {
                 if (obs.passed) continue;
                 if (obs.z < player.z - 50 || obs.z > endZ) continue;
-                
                 const proj = project3D(obs.x, 0, obs.z);
                 if (!proj || proj.scale < 0.01) continue;
-                
                 const size = obs.width * proj.scale;
                 
                 if (obs.type === 'barrel') {
@@ -1078,18 +1066,16 @@ game_html = '''<!DOCTYPE html>
                 }
             }
             
-            // Draw rival riders
+            // Rivals
             for (let rival of rivals) {
                 if (rival.z < player.z - 100 || rival.z > endZ) continue;
-                if (rival.crashes) continue;
-                
+                if (rival.crashed) continue;
                 const proj = project3D(rival.x, 0, rival.z);
                 if (!proj || proj.scale < 0.01) continue;
-                
                 drawRivalBiker(proj, rival);
             }
             
-            // Draw finish line
+            // Finish line
             if (course.finishZ > player.z && course.finishZ < endZ) {
                 const fProj = project3D(0, 0, course.finishZ);
                 if (fProj) {
@@ -1097,36 +1083,28 @@ game_html = '''<!DOCTYPE html>
                     for (let i = 0; i < 8; i++) {
                         for (let j = 0; j < 2; j++) {
                             ctx.fillStyle = (i + j) % 2 === 0 ? '#fff' : '#000';
-                            ctx.fillRect(
-                                fProj.x - width/2 + i * (width/8),
-                                fProj.y - 20 * fProj.scale + j * 20 * fProj.scale,
-                                width/8,
-                                20 * fProj.scale
-                            );
+                            ctx.fillRect(fProj.x - width/2 + i * (width/8), fProj.y - 20 * fProj.scale + j * 20 * fProj.scale, width/8, 20 * fProj.scale);
                         }
                     }
                 }
             }
             
-            // Draw Red Bull arch at start
+            // Start arch
             if (0 > player.z - 50 && 0 < endZ) {
                 const archProj = project3D(0, -50, 0);
                 if (archProj && archProj.scale > 0.01) {
                     const w = 150 * archProj.scale;
                     const h = 100 * archProj.scale;
-                    
                     ctx.fillStyle = '#0033AA';
                     ctx.fillRect(archProj.x - w/2 - 10, archProj.y, 20, h);
                     ctx.fillRect(archProj.x + w/2 - 10, archProj.y, 20, h);
-                    
                     ctx.beginPath();
                     ctx.arc(archProj.x, archProj.y, w/2, Math.PI, 0);
                     ctx.fill();
-                    
                     ctx.fillStyle = '#FFD700';
                     ctx.font = `bold ${Math.max(10, 16 * archProj.scale)}px Arial`;
                     ctx.textAlign = 'center';
-                    ctx.fillText('RED BULL', archProj.x, archProj.y - h * 0.3);
+                    ctx.fillText('WATERLINE', archProj.x, archProj.y - h * 0.3);
                 }
             }
         }
@@ -1135,114 +1113,178 @@ game_html = '''<!DOCTYPE html>
             const bottomY = canvas.height;
             const centerX = canvas.width / 2;
             
-            // Apply tilt to handlebars
             ctx.save();
-            ctx.translate(centerX, bottomY - 50);
+            ctx.translate(centerX, bottomY - 60);
             ctx.rotate(player.tilt * Math.PI / 180);
-            ctx.translate(-centerX, -(bottomY - 50));
+            ctx.translate(-centerX, -(bottomY - 60));
             
-            // Handlebar shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(centerX - 160, bottomY - 55, 320, 15);
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillRect(centerX - 180, bottomY - 58, 360, 18);
             
-            // Handlebar bar
-            const barGrad = ctx.createLinearGradient(centerX - 150, bottomY - 60, centerX + 150, bottomY - 60);
-            barGrad.addColorStop(0, '#333');
-            barGrad.addColorStop(0.5, '#666');
-            barGrad.addColorStop(1, '#333');
+            // Handlebar tube
+            const barGrad = ctx.createLinearGradient(centerX - 170, bottomY - 65, centerX + 170, bottomY - 65);
+            barGrad.addColorStop(0, '#2a2a2a');
+            barGrad.addColorStop(0.5, '#555');
+            barGrad.addColorStop(1, '#2a2a2a');
             ctx.fillStyle = barGrad;
-            ctx.fillRect(centerX - 150, bottomY - 60, 300, 12);
+            ctx.fillRect(centerX - 170, bottomY - 65, 340, 14);
             
-            // Grips
+            // Handlebar curve (realistic shape)
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            
+            // Left side curve
+            ctx.beginPath();
+            ctx.moveTo(centerX - 170, bottomY - 58);
+            ctx.quadraticCurveTo(centerX - 190, bottomY - 70, centerX - 200, bottomY - 55);
+            ctx.stroke();
+            
+            // Right side curve
+            ctx.beginPath();
+            ctx.moveTo(centerX + 170, bottomY - 58);
+            ctx.quadraticCurveTo(centerX + 190, bottomY - 70, centerX + 200, bottomY - 55);
+            ctx.stroke();
+            
+            // Grips (rubber texture)
             ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(centerX - 170, bottomY - 62, 40, 16);
-            ctx.fillRect(centerX + 130, bottomY - 62, 40, 16);
+            ctx.fillRect(centerX - 210, bottomY - 68, 45, 18);
+            ctx.fillRect(centerX + 165, bottomY - 68, 45, 18);
             
-            // Grip texture
+            // Grip texture lines
             ctx.fillStyle = '#333';
-            for (let i = 0; i < 5; i++) {
-                ctx.fillRect(centerX - 165 + i * 7, bottomY - 62, 2, 16);
-                ctx.fillRect(centerX + 135 + i * 7, bottomY - 62, 2, 16);
+            for (let i = 0; i < 6; i++) {
+                ctx.fillRect(centerX - 208 + i * 7, bottomY - 68, 2, 18);
+                ctx.fillRect(centerX + 167 + i * 7, bottomY - 68, 2, 18);
             }
             
-            // Brake levers
-            ctx.fillStyle = '#888';
+            // Brake levers (metal)
+            ctx.fillStyle = '#777';
             ctx.beginPath();
-            ctx.moveTo(centerX - 140, bottomY - 60);
-            ctx.lineTo(centerX - 130, bottomY - 90);
-            ctx.lineTo(centerX - 125, bottomY - 90);
-            ctx.lineTo(centerX - 135, bottomY - 60);
+            ctx.moveTo(centerX - 175, bottomY - 65);
+            ctx.lineTo(centerX - 165, bottomY - 95);
+            ctx.lineTo(centerX - 158, bottomY - 93);
+            ctx.lineTo(centerX - 168, bottomY - 63);
             ctx.closePath();
             ctx.fill();
             
             ctx.beginPath();
-            ctx.moveTo(centerX + 140, bottomY - 60);
-            ctx.lineTo(centerX + 130, bottomY - 90);
-            ctx.lineTo(centerX + 125, bottomY - 90);
-            ctx.lineTo(centerX + 135, bottomY - 60);
+            ctx.moveTo(centerX + 175, bottomY - 65);
+            ctx.lineTo(centerX + 165, bottomY - 95);
+            ctx.lineTo(centerX + 158, bottomY - 93);
+            ctx.lineTo(centerX + 168, bottomY - 63);
             ctx.closePath();
             ctx.fill();
+            
+            // Brake cables
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 162, bottomY - 94);
+            ctx.quadraticCurveTo(centerX - 100, bottomY - 120, centerX - 20, bottomY - 100);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(centerX + 162, bottomY - 94);
+            ctx.quadraticCurveTo(centerX + 100, bottomY - 120, centerX + 20, bottomY - 100);
+            ctx.stroke();
             
             // Stem
             ctx.fillStyle = '#444';
-            ctx.fillRect(centerX - 8, bottomY - 80, 16, 25);
+            ctx.fillRect(centerX - 10, bottomY - 90, 20, 30);
             
-            // Head tube (partial)
-            ctx.fillStyle = '#CC0000';
-            ctx.fillRect(centerX - 12, bottomY - 110, 24, 35);
-            
-            // Front wheel (bottom center, partially visible)
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 4;
+            // Head tube badge
+            ctx.fillStyle = '#00d4ff';
             ctx.beginPath();
-            ctx.arc(centerX, bottomY + 30, 50, Math.PI * 0.7, Math.PI * 1.3);
+            ctx.moveTo(centerX, bottomY - 95);
+            ctx.lineTo(centerX - 8, bottomY - 85);
+            ctx.lineTo(centerX + 8, bottomY - 85);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Front wheel (partial, bottom of screen)
+            const wheelY = bottomY + 20;
+            drawRealisticWheel(centerX, wheelY, 55, Date.now() * 0.01 * player.speed);
+            
+            // Fork legs
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 8, bottomY - 65);
+            ctx.lineTo(centerX - 15, wheelY - 30);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(centerX + 8, bottomY - 65);
+            ctx.lineTo(centerX + 15, wheelY - 30);
             ctx.stroke();
             
-            // Spokes
-            ctx.strokeStyle = '#666';
-            ctx.lineWidth = 1;
-            const spokeAngle = Date.now() * 0.01 * player.speed;
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                ctx.moveTo(centerX, bottomY + 30);
-                ctx.lineTo(
-                    centerX + Math.cos(spokeAngle + i * Math.PI * 0.6) * 45,
-                    bottomY + 30 + Math.sin(spokeAngle + i * Math.PI * 0.6) * 45
-                );
-                ctx.stroke();
-            }
-            
-            // Hands (simple)
-            ctx.fillStyle = '#FFDBAC';
-            ctx.beginPath();
-            ctx.ellipse(centerX - 155, bottomY - 58, 12, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(centerX + 155, bottomY - 58, 12, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // HANDS (realistic gripping)
+            drawHand(centerX - 195, bottomY - 58, -1);
+            drawHand(centerX + 195, bottomY - 58, 1);
             
             ctx.restore();
             
-            // Speed lines when going fast
+            // Speed lines
             if (player.speed > 5) {
-                ctx.strokeStyle = `rgba(255, 255, 255, ${(player.speed - 5) * 0.1})`;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${(player.speed - 5) * 0.08})`;
                 ctx.lineWidth = 1;
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 6; i++) {
                     const x = Math.random() * canvas.width;
                     const y = view.horizon + Math.random() * (canvas.height - view.horizon);
                     ctx.beginPath();
                     ctx.moveTo(x, y);
-                    ctx.lineTo(x, y + 20 + Math.random() * 30);
+                    ctx.lineTo(x, y + 25 + Math.random() * 40);
                     ctx.stroke();
                 }
             }
+        }
+        
+        function drawHand(hx, hy, side) {
+            // Hand shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(hx + 3, hy + 3, 14, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Palm/back of hand
+            ctx.fillStyle = '#FFDBAC';
+            ctx.beginPath();
+            ctx.ellipse(hx, hy, 13, 9, side * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Fingers wrapping around bar
+            ctx.fillStyle = '#E8C4A0';
+            const fingerY = hy - 2;
+            for (let i = 0; i < 4; i++) {
+                const fx = hx + side * (8 - i * 5);
+                ctx.beginPath();
+                ctx.ellipse(fx, fingerY + i * 2, 4, 3, side * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Thumb
+            ctx.fillStyle = '#FFDBAC';
+            ctx.beginPath();
+            ctx.ellipse(hx + side * 10, hy - 5, 5, 3, side * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Wrist
+            ctx.fillStyle = '#FFDBAC';
+            ctx.beginPath();
+            ctx.ellipse(hx - side * 15, hy + 2, 10, 6, side * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Sleeve
+            ctx.fillStyle = '#1a3a5c';
+            ctx.beginPath();
+            ctx.ellipse(hx - side * 22, hy + 3, 12, 8, side * 0.3, 0, Math.PI * 2);
+            ctx.fill();
         }
         
         function fallOff(reason) {
             gameState = 'gameover';
             lives--;
             
-            // Big splash effect
             for (let i = 0; i < 50; i++) {
                 particles.push({
                     x: canvas.width / 2 + (Math.random() - 0.5) * 200,
@@ -1275,24 +1317,20 @@ game_html = '''<!DOCTYPE html>
                     gameState = 'playing';
                 }, 1500);
             }
-            
             updateUI();
         }
         
         function checkRaceWinner() {
-            // Determine who finished first
             let winner = null;
             let winnerZ = -1;
             let winnerName = 'YOU WIN!';
             
-            // Check player
             if (player.finished && player.z > winnerZ) {
                 winnerZ = player.z;
                 winner = 'player';
                 winnerName = 'YOU WIN!';
             }
             
-            // Check rivals
             for (let rival of rivals) {
                 if (rival.finished && rival.z > winnerZ) {
                     winnerZ = rival.z;
@@ -1304,12 +1342,10 @@ game_html = '''<!DOCTYPE html>
             if (winner === 'player') {
                 winLevel();
             } else if (winner && winner !== 'player') {
-                // Show that rival won
                 gameState = 'gameover';
-                showFloatingText('WHOOO! ' + winner.name, canvas.width / 2, canvas.height / 2 - 100);
-                
+                showFloatingText(winner.name + ' WINS!', canvas.width / 2, canvas.height / 2 - 100);
                 setTimeout(() => {
-                    document.getElementById('gameOverReason').textContent = winner.name + ' beat you to the finish!';
+                    document.getElementById('gameOverReason').textContent = winner.name + ' beat you!';
                     document.getElementById('finalScore').textContent = score;
                     document.getElementById('gameOverScreen').style.display = 'flex';
                     document.getElementById('hud').style.display = 'none';
@@ -1324,7 +1360,6 @@ game_html = '''<!DOCTYPE html>
             gameState = 'win';
             score += 1000 * level;
             
-            // Celebration
             for (let i = 0; i < 100; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
@@ -1337,7 +1372,7 @@ game_html = '''<!DOCTYPE html>
                 });
             }
             
-            showFloatingText('WHOOO!', canvas.width / 2, canvas.height / 2 - 100);
+            showFloatingText('VICTORY!', canvas.width / 2, canvas.height / 2 - 100);
             
             setTimeout(() => {
                 document.getElementById('winScore').textContent = score;
@@ -1369,20 +1404,12 @@ game_html = '''<!DOCTYPE html>
             level = 1;
             lives = 3;
             player = {
-                x: 0,
-                z: 0,
-                speed: 0,
-                maxSpeed: 8,
-                balance: 0,
-                balanceVelocity: 0,
-                tilt: 0,
-                pedaling: false,
-                totalDistance: 3000,
-                laneWidth: 120,
-                finished: false
+                x: 0, z: 0, speed: 0, maxSpeed: 8,
+                balance: 0, balanceVelocity: 0, tilt: 0,
+                pedaling: false, totalDistance: 3000,
+                laneWidth: 120, finished: false
             };
             
-            // Create rival riders - start them ahead on the track
             rivals = [
                 createRival(-35, 0.3, 'RED RIDER', '#ff4444', 150),
                 createRival(35, 0.1, 'BLUE RIDER', '#4488ff', 250),
@@ -1408,25 +1435,19 @@ game_html = '''<!DOCTYPE html>
         function nextLevel() {
             document.getElementById('winScreen').style.display = 'none';
             level++;
-            player.z = 0;
-            player.x = 0;
-            player.balance = 0;
-            player.balanceVelocity = 0;
-            player.speed = 0;
+            player.z = 0; player.x = 0; player.balance = 0;
+            player.balanceVelocity = 0; player.speed = 0;
             player.finished = false;
             player.maxSpeed = 8 + level * 0.8;
             player.totalDistance = 3000 + level * 500;
             
-            // Recreate rivals with increased difficulty - start further ahead each level
             rivals = [
                 createRival(-35, 0.3 + level * 0.15, 'RED RIDER', '#ff4444', 200 + level * 50),
                 createRival(35, 0.1 + level * 0.15, 'BLUE RIDER', '#4488ff', 300 + level * 50),
                 createRival(0, -0.2 + level * 0.15, 'YELLOW RIDER', '#ffaa00', 400 + level * 50)
             ];
             
-            particles = [];
-            waterDrops = [];
-            screenShake = 0;
+            particles = []; waterDrops = []; screenShake = 0;
             generateCourse();
             gameState = 'playing';
             document.getElementById('hud').style.display = 'flex';
@@ -1449,22 +1470,19 @@ game_html = '''<!DOCTYPE html>
         function loop(timestamp) {
             const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
             lastTime = timestamp;
-            
             update(dt);
             draw();
-            
             gameLoop = requestAnimationFrame(loop);
         }
         
-        // Start render loop
         lastTime = performance.now();
         gameLoop = requestAnimationFrame(loop);
     </script>
 </body>
 </html>'''
 
-<!-- with open('/mnt/agents/output/redbull_balance_game/index.html', 'w') as f:
+with open('/mnt/agents/output/waterline_rider/index.html', 'w') as f:
     f.write(game_html)
 
-print("First-person game created!")
-print(f"File size: {len(game_html)} characters") -->
+print("Waterline Rider game created!")
+print(f"File size: {len(game_html)} characters")
