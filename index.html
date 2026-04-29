@@ -554,16 +554,20 @@ game_html = '''<!DOCTYPE html>
             // Forward movement
             player.z += player.speed;
             
-            // Balance mechanics
+            // Balance mechanics - AUTO-BALANCE MODE
             const steerInput = (keys['arrowright'] || keys['d'] ? 1 : 0) - 
                               (keys['arrowleft'] || keys['a'] ? 1 : 0);
             
-            // Natural instability
-            const wobble = Math.sin(Date.now() * 0.004) * (0.8 + player.speed * 0.15);
-            const wind = Math.sin(Date.now() * 0.0015) * (level * 0.4);
+            // Reduced natural instability
+            const wobble = Math.sin(Date.now() * 0.004) * (0.15 + player.speed * 0.02);
+            const wind = Math.sin(Date.now() * 0.0015) * (level * 0.08);
             
-            player.balanceVelocity += (steerInput * 2.5 + wobble + wind) * dt * 60;
-            player.balanceVelocity *= 0.94; // Damping
+            // Auto-centering force - bike naturally wants to stay upright
+            const autoCenterForce = -player.balance * 0.15;
+            
+            // Reduced steer input sensitivity
+            player.balanceVelocity += (steerInput * 0.8 + wobble + wind + autoCenterForce) * dt * 60;
+            player.balanceVelocity *= 0.96; // Slightly higher damping for stability
             player.balance += player.balanceVelocity * dt * 60;
             
             // Clamp balance
@@ -582,8 +586,8 @@ game_html = '''<!DOCTYPE html>
                 screenShake *= 0.9;
             }
             
-            // Check if fallen
-            if (Math.abs(player.balance) > 90) {
+            // Check if fallen - much more forgiving now
+            if (Math.abs(player.balance) > 130) {
                 fallOff('Lost your balance!');
                 return;
             }
@@ -604,11 +608,6 @@ game_html = '''<!DOCTYPE html>
                     fallOff('Fell off the ramp!');
                     return;
                 }
-                
-                // Keep player within ramp bounds (soft push)
-                if (Math.abs(player.x - segment.curve) > halfWidth - 10) {
-                    player.balanceVelocity -= Math.sign(player.x - segment.curve) * 2;
-                }
             }
             
             // Obstacle collision
@@ -618,12 +617,12 @@ game_html = '''<!DOCTYPE html>
                     Math.abs(player.x - obs.x) < 25) {
                     
                     if (obs.type === 'barrel') {
-                        player.balanceVelocity += (Math.random() - 0.5) * 60;
-                        screenShake = 10;
-                        createParticles(player.x, 0, player.z, 10, '#FF6600');
+                        // Hit a barrel - crash and fall!
                         obs.passed = true;
-                        score += 50;
-                        showFloatingText('+50', canvas.width / 2, canvas.height / 2);
+                        screenShake = 20;
+                        createParticles(player.x, 0, player.z, 20, '#FF6600');
+                        fallOff('Hit an obstacle!');
+                        return;
                     } else if (obs.type === 'ramp') {
                         player.speed += 3;
                         screenShake = 5;
