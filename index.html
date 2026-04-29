@@ -1,0 +1,1288 @@
+
+import os
+
+os.makedirs('/mnt/agents/output/redbull_balance_game', exist_ok=True)
+
+game_html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Bull: Balance or Bail - First Person</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: 100vh;
+            max-height: 750px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        #startScreen, #gameOverScreen, #winScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.85);
+            pointer-events: all;
+            z-index: 20;
+        }
+        
+        #gameOverScreen, #winScreen {
+            display: none;
+        }
+        
+        h1 {
+            color: #FFD700;
+            font-size: 3.5em;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        
+        .subtitle {
+            color: #fff;
+            font-size: 1.4em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .btn {
+            padding: 18px 60px;
+            font-size: 1.4em;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 50px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 25px rgba(255,215,0,0.4);
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(255,215,0,0.6);
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        
+        .hud-item {
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: 2px solid #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        
+        .hud-item span {
+            color: #FFD700;
+        }
+        
+        #balanceContainer {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            text-align: center;
+        }
+        
+        #balanceLabel {
+            color: #FFD700;
+            font-size: 1em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            margin-bottom: 8px;
+        }
+        
+        #balanceBar {
+            width: 400px;
+            height: 30px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 15px;
+            border: 3px solid #FFD700;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #balanceZone {
+            position: absolute;
+            top: 0;
+            left: 35%;
+            width: 30%;
+            height: 100%;
+            background: rgba(0,255,0,0.25);
+            border-left: 2px solid rgba(0,255,0,0.5);
+            border-right: 2px solid rgba(0,255,0,0.5);
+        }
+        
+        #balanceIndicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 36px;
+            background: #FFD700;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(255,215,0,0.9);
+            transition: left 0.05s;
+        }
+        
+        #speedometer {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 120px;
+            height: 120px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            border: 3px solid #FFD700;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #speedValue {
+            color: #FFD700;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        #speedLabel {
+            color: #aaa;
+            font-size: 0.8em;
+        }
+        
+        #progressContainer {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            text-align: center;
+        }
+        
+        #progressBar {
+            width: 500px;
+            height: 24px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 12px;
+            border: 2px solid #FFD700;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #progressFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #FFD700, #FF6600);
+            transition: width 0.2s;
+        }
+        
+        #progressText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+        
+        .controls-info {
+            color: #aaa;
+            margin-top: 25px;
+            font-size: 1em;
+            text-align: center;
+            line-height: 1.8;
+        }
+        
+        .controls-info kbd {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 5px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        #tiltWarning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        
+        #distanceMarkers {
+            position: absolute;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 80px;
+            pointer-events: none;
+        }
+        
+        .marker {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        
+        .splash-text {
+            position: absolute;
+            color: #fff;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            animation: floatUp 1.5s forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div id="hud" style="display:none;">
+                <div class="hud-item">Score: <span id="score">0</span></div>
+                <div class="hud-item">Level: <span id="level">1</span></div>
+                <div class="hud-item">Lives: <span id="lives">3</span></div>
+            </div>
+            
+            <div id="progressContainer" style="display:none;">
+                <div id="progressBar">
+                    <div id="progressFill"></div>
+                    <div id="progressText">0%</div>
+                </div>
+            </div>
+            
+            <div id="balanceContainer" style="display:none;">
+                <div id="balanceLabel">BALANCE</div>
+                <div id="balanceBar">
+                    <div id="balanceZone"></div>
+                    <div id="balanceIndicator"></div>
+                </div>
+            </div>
+            
+            <div id="speedometer" style="display:none;">
+                <div id="speedValue">0</div>
+                <div id="speedLabel">km/h</div>
+            </div>
+            
+            <div id="tiltWarning">⚠️ TILTING!</div>
+        </div>
+        
+        <div id="startScreen">
+            <h1>Balance or Bail</h1>
+            <p class="subtitle">First-Person Water Challenge</p>
+            <button class="btn" onclick="startGame()">Start Ride</button>
+            <div class="controls-info">
+                <p><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> — Steer & Balance</p>
+                <p><kbd>SPACE</kbd> — Pedal Faster</p>
+                <p>Keep the indicator in the GREEN zone!</p>
+                <p>Don't fall into the water! 💦</p>
+            </div>
+        </div>
+        
+        <div id="gameOverScreen">
+            <h1 style="color:#ff4444;">SPLASH!</h1>
+            <p class="subtitle" id="gameOverReason">You fell into the water!</p>
+            <p class="subtitle">Final Score: <span id="finalScore" style="color:#FFD700;">0</span></p>
+            <button class="btn" onclick="restartGame()">Try Again</button>
+            <button class="btn" onclick="backToMenu()">Main Menu</button>
+        </div>
+        
+        <div id="winScreen">
+            <h1 style="color:#00ff00;">VICTORY!</h1>
+            <p class="subtitle">You made it across!</p>
+            <p class="subtitle">Score: <span id="winScore" style="color:#FFD700;">0</span></p>
+            <button class="btn" onclick="nextLevel()">Next Level</button>
+            <button class="btn" onclick="backToMenu()">Main Menu</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = 'menu';
+        let score = 0;
+        let level = 1;
+        let lives = 3;
+        let gameLoop = null;
+        let lastTime = 0;
+        
+        // Player (first-person perspective)
+        let player = {
+            x: 0, // lateral position on ramp (-50 to 50)
+            z: 0, // distance along ramp
+            speed: 0,
+            maxSpeed: 8,
+            balance: 0, // -100 (left) to 100 (right), 0 is center
+            balanceVelocity: 0,
+            tilt: 0, // visual tilt angle
+            pedaling: false,
+            totalDistance: 3000,
+            laneWidth: 120
+        };
+        
+        // Course generation
+        let course = {
+            segments: [],
+            obstacles: [],
+            decorations: []
+        };
+        
+        // Input
+        let keys = {};
+        
+        // Visual effects
+        let particles = [];
+        let waterDrops = [];
+        let screenShake = 0;
+        
+        // Camera/View
+        let view = {
+            fov: 800,
+            horizon: 0.4, // horizon line at 40% of screen height
+            cameraHeight: 150
+        };
+        
+        function resize() {
+            const container = document.getElementById('gameContainer');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            view.horizon = canvas.height * 0.4;
+        }
+        
+        window.addEventListener('resize', resize);
+        resize();
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                keys['space'] = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            if (e.code === 'Space') keys['space'] = false;
+        });
+        
+        // Touch controls
+        let touchStartX = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touchX = e.touches[0].clientX;
+            const diff = touchX - touchStartX;
+            const center = canvas.width / 2;
+            
+            if (touchX < center - 50) {
+                keys['arrowleft'] = true;
+                keys['arrowright'] = false;
+            } else if (touchX > center + 50) {
+                keys['arrowright'] = true;
+                keys['arrowleft'] = false;
+            }
+            
+            // Bottom half for pedaling
+            if (e.touches[0].clientY > canvas.height * 0.7) {
+                keys['space'] = true;
+            }
+        });
+        
+        canvas.addEventListener('touchend', () => {
+            keys['arrowleft'] = false;
+            keys['arrowright'] = false;
+            keys['space'] = false;
+        });
+        
+        function generateCourse() {
+            course.segments = [];
+            course.obstacles = [];
+            course.decorations = [];
+            
+            const segmentLength = 50;
+            const totalSegments = Math.ceil(player.totalDistance / segmentLength);
+            
+            for (let i = 0; i < totalSegments; i++) {
+                const z = i * segmentLength;
+                
+                // Ramp width narrows as you progress
+                const progress = i / totalSegments;
+                const baseWidth = player.laneWidth * (1 - progress * 0.3 * Math.min(level, 3));
+                
+                // Slight curves in the ramp
+                const curve = Math.sin(i * 0.1) * 30 * level;
+                
+                course.segments.push({
+                    z: z,
+                    width: baseWidth,
+                    curve: curve,
+                    yOffset: Math.sin(i * 0.05) * 10 // slight elevation changes
+                });
+                
+                // Add obstacles
+                if (i > 5 && i < totalSegments - 5 && Math.random() < 0.12 + level * 0.03) {
+                    const obsX = (Math.random() - 0.5) * baseWidth * 0.6;
+                    course.obstacles.push({
+                        z: z + segmentLength / 2,
+                        x: obsX,
+                        width: 25,
+                        height: 20,
+                        type: Math.random() > 0.4 ? 'barrel' : 'ramp',
+                        passed: false
+                    });
+                }
+                
+                // Side decorations (crowd, banners, etc.)
+                if (i % 3 === 0) {
+                    const side = Math.random() > 0.5 ? 1 : -1;
+                    course.decorations.push({
+                        z: z,
+                        x: side * (baseWidth / 2 + 20 + Math.random() * 30),
+                        type: Math.random() > 0.6 ? 'person' : (Math.random() > 0.5 ? 'banner' : 'tent'),
+                        color: `hsl(${Math.random() * 360}, 70%, ${50 + Math.random() * 20}%)`,
+                        side: side
+                    });
+                }
+            }
+            
+            // Finish line
+            course.finishZ = player.totalDistance;
+        }
+        
+        function project3D(x, y, z) {
+            // First-person perspective projection
+            const relativeZ = z - player.z;
+            if (relativeZ <= 0) return null;
+            
+            const scale = view.fov / relativeZ;
+            const screenX = canvas.width / 2 + (x - player.x) * scale;
+            const screenY = view.horizon + (view.cameraHeight - y) * scale;
+            
+            return { x: screenX, y: screenY, scale: scale };
+        }
+        
+        function update(dt) {
+            if (gameState !== 'playing') return;
+            
+            // Pedaling
+            player.pedaling = keys[' '] || keys['space'];
+            const targetSpeed = player.pedaling ? player.maxSpeed : 2;
+            player.speed += (targetSpeed - player.speed) * 0.08;
+            
+            // Forward movement
+            player.z += player.speed;
+            
+            // Balance mechanics
+            const steerInput = (keys['arrowright'] || keys['d'] ? 1 : 0) - 
+                              (keys['arrowleft'] || keys['a'] ? 1 : 0);
+            
+            // Natural instability
+            const wobble = Math.sin(Date.now() * 0.004) * (0.8 + player.speed * 0.15);
+            const wind = Math.sin(Date.now() * 0.0015) * (level * 0.4);
+            
+            player.balanceVelocity += (steerInput * 2.5 + wobble + wind) * dt * 60;
+            player.balanceVelocity *= 0.94; // Damping
+            player.balance += player.balanceVelocity * dt * 60;
+            
+            // Clamp balance
+            player.balance = Math.max(-100, Math.min(100, player.balance));
+            
+            // Lateral movement based on balance
+            player.x += player.balance * 0.02 * player.speed * dt * 60;
+            
+            // Visual tilt
+            player.tilt = player.balance * 0.3;
+            
+            // Screen shake when unbalanced
+            if (Math.abs(player.balance) > 60) {
+                screenShake = (Math.abs(player.balance) - 60) * 0.1;
+            } else {
+                screenShake *= 0.9;
+            }
+            
+            // Check if fallen
+            if (Math.abs(player.balance) > 90) {
+                fallOff('Lost your balance!');
+                return;
+            }
+            
+            // Find current segment
+            const segmentIndex = Math.floor(player.z / 50);
+            const segment = course.segments[segmentIndex];
+            
+            if (!segment && player.z >= player.totalDistance) {
+                winLevel();
+                return;
+            }
+            
+            // Check if off the ramp
+            if (segment) {
+                const halfWidth = segment.width / 2;
+                if (Math.abs(player.x - segment.curve) > halfWidth + 5) {
+                    fallOff('Fell off the ramp!');
+                    return;
+                }
+                
+                // Keep player within ramp bounds (soft push)
+                if (Math.abs(player.x - segment.curve) > halfWidth - 10) {
+                    player.balanceVelocity -= Math.sign(player.x - segment.curve) * 2;
+                }
+            }
+            
+            // Obstacle collision
+            for (let obs of course.obstacles) {
+                if (!obs.passed && 
+                    Math.abs(player.z - obs.z) < 30 &&
+                    Math.abs(player.x - obs.x) < 25) {
+                    
+                    if (obs.type === 'barrel') {
+                        player.balanceVelocity += (Math.random() - 0.5) * 60;
+                        screenShake = 10;
+                        createParticles(player.x, 0, player.z, 10, '#FF6600');
+                        obs.passed = true;
+                        score += 50;
+                        showFloatingText('+50', canvas.width / 2, canvas.height / 2);
+                    } else if (obs.type === 'ramp') {
+                        player.speed += 3;
+                        screenShake = 5;
+                        createParticles(player.x, 0, player.z, 8, '#888');
+                        obs.passed = true;
+                        score += 100;
+                        showFloatingText('+100', canvas.width / 2, canvas.height / 2);
+                    }
+                }
+            }
+            
+            // Score
+            score += Math.floor(player.speed * 0.15);
+            
+            // Water particles (ambient)
+            if (Math.random() < 0.1) {
+                waterDrops.push({
+                    x: (Math.random() - 0.5) * canvas.width,
+                    y: canvas.height + 10,
+                    vy: -Math.random() * 2 - 1,
+                    life: 1,
+                    size: Math.random() * 2 + 1
+                });
+            }
+            
+            // Update particles
+            particles = particles.filter(p => {
+                p.vy += 0.2;
+                p.y += p.vy;
+                p.x += p.vx;
+                p.life -= dt * 1.5;
+                return p.life > 0;
+            });
+            
+            // Update water drops
+            waterDrops = waterDrops.filter(d => {
+                d.y += d.vy;
+                d.life -= dt;
+                return d.life > 0 && d.y > view.horizon;
+            });
+            
+            updateUI();
+        }
+        
+        function createParticles(x, y, z, count, color) {
+            for (let i = 0; i < count; i++) {
+                const proj = project3D(x, y, z);
+                if (proj) {
+                    particles.push({
+                        x: proj.x + (Math.random() - 0.5) * 40,
+                        y: proj.y + (Math.random() - 0.5) * 40,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: -Math.random() * 8 - 2,
+                        life: 1,
+                        size: Math.random() * 6 + 2,
+                        color: color
+                    });
+                }
+            }
+        }
+        
+        function showFloatingText(text, x, y) {
+            const el = document.createElement('div');
+            el.className = 'splash-text';
+            el.textContent = text;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.getElementById('ui').appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('lives').textContent = lives;
+            
+            const progress = Math.min((player.z / player.totalDistance) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.floor(progress) + '%';
+            
+            const indicator = document.getElementById('balanceIndicator');
+            const indicatorX = 50 + (player.balance / 100) * 50;
+            indicator.style.left = indicatorX + '%';
+            
+            if (Math.abs(player.balance) > 70) {
+                indicator.style.background = '#ff4444';
+                document.getElementById('tiltWarning').style.opacity = '1';
+            } else if (Math.abs(player.balance) > 50) {
+                indicator.style.background = '#ffaa00';
+                document.getElementById('tiltWarning').style.opacity = '0.5';
+            } else {
+                indicator.style.background = '#FFD700';
+                document.getElementById('tiltWarning').style.opacity = '0';
+            }
+            
+            document.getElementById('speedValue').textContent = Math.floor(player.speed * 3);
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Screen shake
+            ctx.save();
+            if (screenShake > 0.5) {
+                ctx.translate(
+                    (Math.random() - 0.5) * screenShake * 2,
+                    (Math.random() - 0.5) * screenShake * 2
+                );
+            }
+            
+            // Sky
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, view.horizon);
+            skyGrad.addColorStop(0, '#4A90E2');
+            skyGrad.addColorStop(0.5, '#87CEEB');
+            skyGrad.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, view.horizon);
+            
+            // Sun
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(canvas.width * 0.8, view.horizon * 0.3, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(canvas.width * 0.8, view.horizon * 0.3, 60, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Clouds
+            drawClouds();
+            
+            // Water
+            const waterGrad = ctx.createLinearGradient(0, view.horizon, 0, canvas.height);
+            waterGrad.addColorStop(0, '#4682B4');
+            waterGrad.addColorStop(0.5, '#1E90FF');
+            waterGrad.addColorStop(1, '#0066CC');
+            ctx.fillStyle = waterGrad;
+            ctx.fillRect(0, view.horizon, canvas.width, canvas.height - view.horizon);
+            
+            // Water waves (perspective)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 8; i++) {
+                const y = view.horizon + (canvas.height - view.horizon) * (i / 8);
+                const waveOffset = Math.sin(Date.now() * 0.002 + i) * 20;
+                ctx.beginPath();
+                for (let x = 0; x < canvas.width; x += 20) {
+                    const wy = y + Math.sin((x + waveOffset) * 0.02) * 3;
+                    if (x === 0) ctx.moveTo(x, wy);
+                    else ctx.lineTo(x, wy);
+                }
+                ctx.stroke();
+            }
+            
+            // Draw 3D scene
+            drawCourse();
+            
+            // Draw handlebars (first-person view)
+            drawHandlebars();
+            
+            // Particles
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+            
+            // Water drops on screen
+            waterDrops.forEach(d => {
+                ctx.fillStyle = `rgba(150, 200, 255, ${d.life * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            ctx.restore();
+        }
+        
+        function drawClouds() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            const clouds = [
+                { x: canvas.width * 0.2, y: view.horizon * 0.2, w: 80, h: 30 },
+                { x: canvas.width * 0.5, y: view.horizon * 0.15, w: 100, h: 35 },
+                { x: canvas.width * 0.1, y: view.horizon * 0.25, w: 60, h: 25 }
+            ];
+            
+            clouds.forEach(c => {
+                ctx.beginPath();
+                ctx.ellipse(c.x, c.y, c.w, c.h, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(c.x - 20, c.y + 5, c.w * 0.6, c.h * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(c.x + 20, c.y + 5, c.w * 0.6, c.h * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        function drawCourse() {
+            // Draw segments from far to near
+            const drawDistance = 2000;
+            const startZ = Math.floor(player.z / 50) * 50;
+            const endZ = startZ + drawDistance;
+            
+            // Draw decorations first (behind ramp)
+            for (let i = course.decorations.length - 1; i >= 0; i--) {
+                const dec = course.decorations[i];
+                if (dec.z < player.z - 50 || dec.z > endZ) continue;
+                
+                const proj = project3D(dec.x, 0, dec.z);
+                if (!proj || proj.scale < 0.01) continue;
+                
+                const size = 30 * proj.scale;
+                
+                if (dec.type === 'person') {
+                    // Simple person
+                    ctx.fillStyle = dec.color;
+                    ctx.fillRect(proj.x - size/4, proj.y - size, size/2, size);
+                    ctx.beginPath();
+                    ctx.arc(proj.x, proj.y - size * 1.3, size/3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Arms cheering
+                    if (Math.abs(dec.z - player.z) < 300) {
+                        ctx.strokeStyle = dec.color;
+                        ctx.lineWidth = 2 * proj.scale;
+                        ctx.beginPath();
+                        ctx.moveTo(proj.x - size/3, proj.y - size * 0.8);
+                        ctx.lineTo(proj.x - size/2, proj.y - size * 1.2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(proj.x + size/3, proj.y - size * 0.8);
+                        ctx.lineTo(proj.x + size/2, proj.y - size * 1.2);
+                        ctx.stroke();
+                    }
+                } else if (dec.type === 'banner') {
+                    ctx.fillStyle = dec.color;
+                    ctx.fillRect(proj.x - size, proj.y - size * 2, size * 2, size);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `${Math.max(8, 10 * proj.scale)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('RED BULL', proj.x, proj.y - size * 1.5);
+                } else if (dec.type === 'tent') {
+                    ctx.fillStyle = '#0033AA';
+                    ctx.beginPath();
+                    ctx.moveTo(proj.x, proj.y - size * 1.5);
+                    ctx.lineTo(proj.x - size, proj.y);
+                    ctx.lineTo(proj.x + size, proj.y);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+            
+            // Draw ramp segments
+            for (let z = endZ; z >= startZ; z -= 50) {
+                const segIndex = Math.floor(z / 50);
+                const seg = course.segments[segIndex];
+                if (!seg) continue;
+                
+                const nextSeg = course.segments[segIndex + 1];
+                if (!nextSeg) continue;
+                
+                // Project corners
+                const halfWidth = seg.width / 2;
+                const curve = seg.curve;
+                
+                const p1 = project3D(curve - halfWidth, seg.yOffset, z);
+                const p2 = project3D(curve + halfWidth, seg.yOffset, z);
+                const p3 = project3D(nextSeg.curve + nextSeg.width / 2, nextSeg.yOffset, z + 50);
+                const p4 = project3D(nextSeg.curve - nextSeg.width / 2, nextSeg.yOffset, z + 50);
+                
+                if (!p1 || !p2 || !p3 || !p4) continue;
+                
+                // Ramp surface
+                const rampGrad = ctx.createLinearGradient(0, p1.y, 0, p3.y);
+                if (segIndex % 5 === 0) {
+                    rampGrad.addColorStop(0, '#FFD700');
+                    rampGrad.addColorStop(1, '#FFA500');
+                } else {
+                    rampGrad.addColorStop(0, '#FF4444');
+                    rampGrad.addColorStop(1, '#CC0000');
+                }
+                
+                ctx.fillStyle = rampGrad;
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Lane markings
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = Math.max(1, 2 * p1.scale);
+                ctx.setLineDash([10 * p1.scale, 10 * p1.scale]);
+                
+                const centerP1 = project3D(curve, seg.yOffset, z);
+                const centerP2 = project3D(nextSeg.curve, nextSeg.yOffset, z + 50);
+                if (centerP1 && centerP2) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerP1.x, centerP1.y);
+                    ctx.lineTo(centerP2.x, centerP2.y);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+                
+                // Side barriers
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(p1.x - 3, p1.y - 5 * p1.scale, 6, 10 * p1.scale);
+                ctx.fillRect(p2.x - 3, p2.y - 5 * p1.scale, 6, 10 * p1.scale);
+            }
+            
+            // Draw obstacles
+            for (let obs of course.obstacles) {
+                if (obs.passed) continue;
+                if (obs.z < player.z - 50 || obs.z > endZ) continue;
+                
+                const proj = project3D(obs.x, 0, obs.z);
+                if (!proj || proj.scale < 0.01) continue;
+                
+                const size = obs.width * proj.scale;
+                
+                if (obs.type === 'barrel') {
+                    ctx.fillStyle = '#FF6600';
+                    ctx.fillRect(proj.x - size/2, proj.y - size, size, size);
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(proj.x - size/2, proj.y - size * 0.7, size, size * 0.1);
+                    ctx.fillRect(proj.x - size/2, proj.y - size * 0.4, size, size * 0.1);
+                } else if (obs.type === 'ramp') {
+                    ctx.fillStyle = '#888';
+                    ctx.beginPath();
+                    ctx.moveTo(proj.x - size, proj.y);
+                    ctx.lineTo(proj.x, proj.y - size * 0.8);
+                    ctx.lineTo(proj.x + size, proj.y);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+            
+            // Draw finish line
+            if (course.finishZ > player.z && course.finishZ < endZ) {
+                const fProj = project3D(0, 0, course.finishZ);
+                if (fProj) {
+                    const width = player.laneWidth * fProj.scale;
+                    for (let i = 0; i < 8; i++) {
+                        for (let j = 0; j < 2; j++) {
+                            ctx.fillStyle = (i + j) % 2 === 0 ? '#fff' : '#000';
+                            ctx.fillRect(
+                                fProj.x - width/2 + i * (width/8),
+                                fProj.y - 20 * fProj.scale + j * 20 * fProj.scale,
+                                width/8,
+                                20 * fProj.scale
+                            );
+                        }
+                    }
+                }
+            }
+            
+            // Draw Red Bull arch at start
+            if (0 > player.z - 50 && 0 < endZ) {
+                const archProj = project3D(0, -50, 0);
+                if (archProj && archProj.scale > 0.01) {
+                    const w = 150 * archProj.scale;
+                    const h = 100 * archProj.scale;
+                    
+                    ctx.fillStyle = '#0033AA';
+                    ctx.fillRect(archProj.x - w/2 - 10, archProj.y, 20, h);
+                    ctx.fillRect(archProj.x + w/2 - 10, archProj.y, 20, h);
+                    
+                    ctx.beginPath();
+                    ctx.arc(archProj.x, archProj.y, w/2, Math.PI, 0);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = `bold ${Math.max(10, 16 * archProj.scale)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('RED BULL', archProj.x, archProj.y - h * 0.3);
+                }
+            }
+        }
+        
+        function drawHandlebars() {
+            const bottomY = canvas.height;
+            const centerX = canvas.width / 2;
+            
+            // Apply tilt to handlebars
+            ctx.save();
+            ctx.translate(centerX, bottomY - 50);
+            ctx.rotate(player.tilt * Math.PI / 180);
+            ctx.translate(-centerX, -(bottomY - 50));
+            
+            // Handlebar shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(centerX - 160, bottomY - 55, 320, 15);
+            
+            // Handlebar bar
+            const barGrad = ctx.createLinearGradient(centerX - 150, bottomY - 60, centerX + 150, bottomY - 60);
+            barGrad.addColorStop(0, '#333');
+            barGrad.addColorStop(0.5, '#666');
+            barGrad.addColorStop(1, '#333');
+            ctx.fillStyle = barGrad;
+            ctx.fillRect(centerX - 150, bottomY - 60, 300, 12);
+            
+            // Grips
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(centerX - 170, bottomY - 62, 40, 16);
+            ctx.fillRect(centerX + 130, bottomY - 62, 40, 16);
+            
+            // Grip texture
+            ctx.fillStyle = '#333';
+            for (let i = 0; i < 5; i++) {
+                ctx.fillRect(centerX - 165 + i * 7, bottomY - 62, 2, 16);
+                ctx.fillRect(centerX + 135 + i * 7, bottomY - 62, 2, 16);
+            }
+            
+            // Brake levers
+            ctx.fillStyle = '#888';
+            ctx.beginPath();
+            ctx.moveTo(centerX - 140, bottomY - 60);
+            ctx.lineTo(centerX - 130, bottomY - 90);
+            ctx.lineTo(centerX - 125, bottomY - 90);
+            ctx.lineTo(centerX - 135, bottomY - 60);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX + 140, bottomY - 60);
+            ctx.lineTo(centerX + 130, bottomY - 90);
+            ctx.lineTo(centerX + 125, bottomY - 90);
+            ctx.lineTo(centerX + 135, bottomY - 60);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Stem
+            ctx.fillStyle = '#444';
+            ctx.fillRect(centerX - 8, bottomY - 80, 16, 25);
+            
+            // Head tube (partial)
+            ctx.fillStyle = '#CC0000';
+            ctx.fillRect(centerX - 12, bottomY - 110, 24, 35);
+            
+            // Front wheel (bottom center, partially visible)
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(centerX, bottomY + 30, 50, Math.PI * 0.7, Math.PI * 1.3);
+            ctx.stroke();
+            
+            // Spokes
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            const spokeAngle = Date.now() * 0.01 * player.speed;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(centerX, bottomY + 30);
+                ctx.lineTo(
+                    centerX + Math.cos(spokeAngle + i * Math.PI * 0.6) * 45,
+                    bottomY + 30 + Math.sin(spokeAngle + i * Math.PI * 0.6) * 45
+                );
+                ctx.stroke();
+            }
+            
+            // Hands (simple)
+            ctx.fillStyle = '#FFDBAC';
+            ctx.beginPath();
+            ctx.ellipse(centerX - 155, bottomY - 58, 12, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(centerX + 155, bottomY - 58, 12, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Speed lines when going fast
+            if (player.speed > 5) {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${(player.speed - 5) * 0.1})`;
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 5; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = view.horizon + Math.random() * (canvas.height - view.horizon);
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x, y + 20 + Math.random() * 30);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        function fallOff(reason) {
+            gameState = 'gameover';
+            lives--;
+            
+            // Big splash effect
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+                    y: canvas.height / 2 + (Math.random() - 0.5) * 100,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: -Math.random() * 15 - 5,
+                    life: 2,
+                    size: Math.random() * 10 + 3,
+                    color: `rgba(100, 150, 255, ${Math.random() * 0.5 + 0.5})`
+                });
+            }
+            
+            if (lives <= 0) {
+                setTimeout(() => {
+                    document.getElementById('gameOverReason').textContent = reason;
+                    document.getElementById('finalScore').textContent = score;
+                    document.getElementById('gameOverScreen').style.display = 'flex';
+                    document.getElementById('hud').style.display = 'none';
+                    document.getElementById('progressContainer').style.display = 'none';
+                    document.getElementById('balanceContainer').style.display = 'none';
+                    document.getElementById('speedometer').style.display = 'none';
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    player.z = Math.max(0, player.z - 300);
+                    player.x = 0;
+                    player.balance = 0;
+                    player.balanceVelocity = 0;
+                    player.speed = 0;
+                    gameState = 'playing';
+                }, 1500);
+            }
+            
+            updateUI();
+        }
+        
+        function winLevel() {
+            gameState = 'win';
+            score += 1000 * level;
+            
+            // Celebration
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: -Math.random() * 10 - 2,
+                    life: 3,
+                    size: Math.random() * 8 + 2,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                });
+            }
+            
+            setTimeout(() => {
+                document.getElementById('winScore').textContent = score;
+                document.getElementById('winScreen').style.display = 'flex';
+                document.getElementById('hud').style.display = 'none';
+                document.getElementById('progressContainer').style.display = 'none';
+                document.getElementById('balanceContainer').style.display = 'none';
+                document.getElementById('speedometer').style.display = 'none';
+            }, 1500);
+        }
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('balanceContainer').style.display = 'block';
+            document.getElementById('speedometer').style.display = 'flex';
+            
+            resetGame();
+            gameState = 'playing';
+            
+            if (gameLoop) cancelAnimationFrame(gameLoop);
+            lastTime = performance.now();
+            gameLoop = requestAnimationFrame(loop);
+        }
+        
+        function resetGame() {
+            score = 0;
+            level = 1;
+            lives = 3;
+            player = {
+                x: 0,
+                z: 0,
+                speed: 0,
+                maxSpeed: 8,
+                balance: 0,
+                balanceVelocity: 0,
+                tilt: 0,
+                pedaling: false,
+                totalDistance: 3000,
+                laneWidth: 120
+            };
+            particles = [];
+            waterDrops = [];
+            screenShake = 0;
+            generateCourse();
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            resetGame();
+            gameState = 'playing';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('balanceContainer').style.display = 'block';
+            document.getElementById('speedometer').style.display = 'flex';
+        }
+        
+        function nextLevel() {
+            document.getElementById('winScreen').style.display = 'none';
+            level++;
+            player.z = 0;
+            player.x = 0;
+            player.balance = 0;
+            player.balanceVelocity = 0;
+            player.speed = 0;
+            player.maxSpeed = 8 + level * 0.8;
+            player.totalDistance = 3000 + level * 500;
+            particles = [];
+            waterDrops = [];
+            screenShake = 0;
+            generateCourse();
+            gameState = 'playing';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('balanceContainer').style.display = 'block';
+            document.getElementById('speedometer').style.display = 'flex';
+        }
+        
+        function backToMenu() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('winScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('balanceContainer').style.display = 'none';
+            document.getElementById('speedometer').style.display = 'none';
+            gameState = 'menu';
+        }
+        
+        function loop(timestamp) {
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+            lastTime = timestamp;
+            
+            update(dt);
+            draw();
+            
+            gameLoop = requestAnimationFrame(loop);
+        }
+        
+        // Start render loop
+        lastTime = performance.now();
+        gameLoop = requestAnimationFrame(loop);
+    </script>
+</body>
+</html>'''
+
+<!-- with open('/mnt/agents/output/redbull_balance_game/index.html', 'w') as f:
+    f.write(game_html)
+
+print("First-person game created!")
+print(f"File size: {len(game_html)} characters") -->
